@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusamour.inoteblog.mapper.CommentMapper">
+
+  <resultMap id="Comment" type="com.campusamour.inoteblog.model.Comment">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="nickname" jdbcType="VARCHAR" property="nickname" />
+    <result property="email" column="email"/>
+    <result property="content" column="content"/>
+    <result property="avatar" column="avatar"/>
+    <result property="createTime" column="create_time"/>
+    <result property="parentCommentId" column="parent_comment_id"/>
+    <result property="parentCommentNickname" column="parent_comment_nickname"/>
+    <result property="uploaderComment" column="uploader_comment"/>
+    <association property="blog" javaType="com.campusamour.inoteblog.model.Blog">
+      <id property="id" column="id"/>
+    </association>
+  </resultMap>
+
+  <select id="queryBlogCommentsByBlogIdAndParentCommentIsNull" resultMap="Comment">
+        select
+        c.id id, c.nickname, c.email, c.content, c.avatar,
+        c.create_time, c.parent_comment_id,
+        c.parent_comment_nickname, c.uploader_comment,
+        b.id
+        from t_comment c, t_blog b
+        where c.blog_id = #{blogId} and c.blog_id = b.id and c.parent_comment_id is null
+        order by c.create_time
+    </select>
+
+  <select id="findByParentCommentId" resultMap="Comment">
+        select
+        c.id id, c.nickname, c.email, c.content, c.avatar,
+        c.create_time, c.blog_id, c.parent_comment_id, c.parent_comment_nickname, c.uploader_comment
+        from t_comment c
+        where c.parent_comment_id = #{parentCommentId}
+  </select>
+
+  <select id="queryCommentsNickNameById" resultType="java.lang.String">
+        select nickname
+        from t_comment
+        where id = #{parentCommentId}
+  </select>
+
+  <insert id="insertComment" parameterType="com.campusamour.inoteblog.model.Comment">
+        insert into
+        t_comment (nickname, email, content, avatar,
+        create_time, blog_id, parent_comment_id, parent_comment_nickname, uploader_comment)
+        values (#{nickname}, #{email}, #{content}, #{avatar},
+        #{createTime}, #{blogId}, #{parentCommentId}, #{parentCommentNickname}, #{uploaderComment});
+  </insert>
+
+  <!--实体是: com.campusamour.inoteblog.queryentity.CommentToReply-->
+  <select id="queryCommentToReplyByCommentId" parameterType="java.lang.Long" resultType="com.campusamour.inoteblog.queryentity.CommentToReply">
+    select id, comment_id, reply_id
+    from t_comment_reply
+    where comment_id = #{commentId}
+  </select>
+
+  <!--根据评论查询其所有子回复信息-->
+  <select id="queryCommentRepliesByReplyIds" resultMap="Comment">
+    Select
+      id, nickname, email, content, avatar,
+      create_time, parent_comment_id, parent_comment_nickname, uploader_comment
+    from t_comment where id in
+    <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+        #{id}
+    </foreach> order by create_time
+  </select>
+
+  <insert id="insertCommentReplies" parameterType="com.campusamour.inoteblog.queryentity.CommentToReply">
+        insert into
+        t_comment_reply (comment_id, reply_id)
+        values (#{commentId}, #{replyId});
+  </insert>
+
+  <select id="queryNextCommentIdValue" resultType="java.lang.Long">
+        select id from t_comment order by id desc limit 1;
+  </select>
+
+  <select id="queryBlogIdByCommentId" resultType="java.lang.Long">
+        select blog_id from t_comment where id = #{commentId};
+  </select>
+
+  <delete id="deleteCommentToReplyByReplyIds">
+        delete from t_comment_reply
+        where reply_id in
+        <foreach item="replyId" index="index" collection="list" open="(" separator="," close=")">
+            #{replyId}
+        </foreach>
+  </delete>
+
+  <delete id="deleteCommentAndReplyByCommentIds">
+        delete from t_comment
+        where id in
+        <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+  </delete>
+
+
+
+</mapper>

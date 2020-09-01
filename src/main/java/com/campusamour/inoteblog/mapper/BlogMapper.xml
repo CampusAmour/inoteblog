@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusamour.inoteblog.mapper.BlogMapper">
+  <resultMap id="BaseResultMap" type="com.campusamour.inoteblog.model.Blog">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+  </resultMap>
+
+  <resultMap id="IndexPageBlog" type="com.campusamour.inoteblog.queryentity.IndexPageBlog">
+    <id property="id" column="id"/>
+    <result column="title" property="title" />
+    <result column="first_image" property="firstImage" />
+    <result column="views" property="views"/>
+    <result column="comment_count" property="commentCount"/>
+    <result column="update_time" property="updateTime"/>
+    <result column="description" property="description"/>
+    <result column="tag_ids" property="tagIds"/>
+    <result column="type_id" property="typeId"/>
+
+    <result column="name" property="typeName"/>
+    <result column="nickname" property="nickname"/>
+    <result column="avatar" property="avatar"/>
+  </resultMap>
+
+  <select id="queryIndexPageBlogs" resultMap="IndexPageBlog">
+        select
+        b.id, b.title ,b.first_image, b.views, b.comment_count, b.update_time, b.description, b.tag_ids, b.type_id,
+        t.name,
+        u.nickname, u.avatar
+        from t_blog b, t_type t, t_user u
+        where b.type_id = t.id and  u.id = b.user_id and b.published
+        ${sqlString}
+  </select>
+
+  <select id="queryBlogsByQuery" parameterType="java.lang.String" resultMap="IndexPageBlog">
+        select
+        b.id, b.title ,b.first_image, b.views, b.comment_count, b.update_time, b.description, b.tag_ids, b.type_id,
+        t.name,
+        u.nickname, u.avatar
+        from t_blog b, t_type t, t_user u
+        where b.type_id = t.id and  u.id = b.user_id and (b.title like CONCAT('%', #{query}, '%') or b.content like CONCAT('%', #{query}, '%'))
+
+  </select>
+
+
+  <resultMap id="queryPostPageBlogs" type="com.campusamour.inoteblog.queryentity.PostPageBlog">
+    <id property="id" column="id"/>
+    <result column="title" property="title" />
+    <result column="recommend" property="recommend"/>
+    <result column="published" property="published"/>
+    <result column="update_time" property="updateTime"/>
+    <association property="type" javaType="com.campusamour.inoteblog.model.Type">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+      <result column="blog_nums" property="blogNums"/>
+    </association>
+  </resultMap>
+
+  <select id="queryPostPageBlogs" resultMap="queryPostPageBlogs">
+        select
+        b.id, b.title ,b.recommend, b.published, b.update_time,
+        t.id, t.name, t.blog_nums
+        from t_blog b, t_type t
+        where b.type_id = t.id
+  </select>
+
+  <select id="queryAllBlogs" resultMap="BaseResultMap">
+    select
+    id, title, content, first_image, flag, views, comment_count,
+    appreciation, share_statement, commentable, published,
+    recommend, create_time, update_time, type_id, user_id, tag_ids, description
+    from t_blog
+  </select>
+
+  <sql id="Base_Column_List">
+    id, title
+  </sql>
+
+  <resultMap id="allBlogInfoResultMap" type="com.campusamour.inoteblog.model.Blog">
+    <id column="id" property="id" />
+    <result column="title" property="title" />
+    <result column="content" property="content" />
+    <result column="first_image" property="firstImage" />
+    <result column="flag" property="flag" />
+    <result column="description" property="description"/>
+    <result column="tag_ids" property="tagIds"/>
+    <result column="views" property="views"/>
+    <result column="comment_count" property="commentCount"/>
+    <result column="type_id" property="typeId"/>
+    <result column="user_id" property="userId"/>
+    <result column="appreciation" property="appreciation"/>
+    <result column="share_statement" property="shareStatement"/>
+    <result column="commentable" property="commentable"/>
+    <result column="recommend" property="recommend"/>
+    <result column="published" property="published"/>
+    <result column="create_time" property="createTime"/>
+    <result column="update_time" property="updateTime"/>
+
+    <association property="user" javaType="com.campusamour.inoteblog.model.User">
+      <id column="id" property="id"/>
+      <result column="nickname" property="nickname"/>
+      <result column="username" property="username"/>
+      <result column="avatar" property="avatar" />
+      <result column="email" property="email" />
+    </association>
+
+    <association property="type" javaType="com.campusamour.inoteblog.model.Type">
+      <id column="id" property="id"/>
+      <result column="name" property="name"/>
+      <result column="blog_nums" property="blogNums"/>
+    </association>
+  </resultMap>
+
+  <select id="queryBlogById" parameterType="java.lang.Long" resultMap="allBlogInfoResultMap">
+    select
+    b.id, b.title, b.content, b.first_image, b.flag, b.description,
+    b.tag_ids, b.views, b.comment_count, b.type_id, b.user_id,
+    b.appreciation, b.share_statement, b.commentable, b.published,
+    b.recommend, b.create_time, b.update_time,
+    u.id, u.nickname, u.username, u.avatar, u.email,
+    t.id, t.name, t.blog_nums
+    from t_blog b, t_user u, t_type t
+    where b.id = #{id} and b.type_id = t.id and b.user_id = u.id
+  </select>
+
+  <select id="queryBlogsbyBlogIds" resultMap="allBlogInfoResultMap">
+    select
+    b.id, b.title ,b.first_image, b.views, b.comment_count, b.update_time, b.description,
+    b.tag_ids, b.type_id,
+    t.name,
+    u.nickname, u.avatar
+    from t_blog b, t_type t, t_user u
+    where
+    b.id in
+    <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+    and b.type_id = t.id and  u.id = b.user_id
+  </select>
+
+  <select id="queryBlogByTitle" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_blog
+    where title = #{title,jdbcType=VARCHAR} and id != #{id}
+  </select>
+
+  <insert id="insertBlog" parameterType="com.campusamour.inoteblog.model.Blog">
+        insert into t_blog (title, content, first_image, flag,
+        views, comment_count, appreciation, share_statement, commentable, published,
+        recommend, create_time, update_time, type_id, user_id, tag_ids, description)
+        values (#{title}, #{content}, #{firstImage}, #{flag}, #{views}, #{commentCount}, #{appreciation},
+        #{shareStatement}, #{commentable}, #{published}, #{recommend}, #{createTime},
+        #{updateTime}, #{typeId}, #{userId}, #{tagIds}, #{description})
+    </insert>
+
+  <!--编辑修改文章-->
+  <update id="updateBlogById" parameterType="com.campusamour.inoteblog.model.Blog">
+    update t_blog set title = #{title}, content = #{content}, flag = #{flag},
+    type_id = #{typeId}, share_statement = #{shareStatement}, appreciation = #{appreciation},
+    commentable = #{commentable}, published = #{published}, first_image = #{firstImage},
+    recommend = #{recommend}, update_time = #{updateTime}, tag_ids = #{tagIds}, description = #{description} where id = #{id}
+  </update>
+
+  <delete id="deleteBlogById" parameterType="java.lang.Long">
+    delete from t_blog
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <select id="queryBlogTypeId" parameterType="java.lang.Long" resultType="java.lang.Long">
+    select
+    type_id
+    from t_blog
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <select id="queryBlogTagIds" parameterType="java.lang.Long" resultType="java.lang.String">
+    select
+    tag_ids
+    from t_blog
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <!--推荐top size的博客-->
+  <select id="queryBlogsByRecommendAndViewsTop" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    id, title, content, first_image, flag, views, comment_count,
+    appreciation, share_statement, commentable, published,
+    recommend, create_time, update_time, type_id, user_id, tag_ids, description
+    from t_blog where recommend = true order by views desc limit #{size}
+  </select>
+
+  <!--随机推荐一篇已发表博客的id值-->
+  <select id="queryRandomPublishedBlogId" resultType="java.lang.Long">
+    select
+    id
+    from t_blog where published = true order by rand() limit 1
+  </select>
+
+  <update id="increaseBlogViewById" parameterType="java.lang.Long">
+    update t_blog set views = views + 1 where id = #{blogId}
+  </update>
+
+  <!--查询博客所有年份(去重)-->
+  <select id="queryBlogAllYears" resultType="java.lang.String">
+    select distinct
+    date_format(update_time, "%Y")
+    as year from
+    t_blog
+    group by
+    year
+    order by year desc
+  </select>
+
+  <select id="queryBlogsByYear" resultMap="BaseResultMap">
+    select
+    id, title, flag, update_time
+    from t_blog
+    where date_format(update_time, "%Y") = #{year}
+  </select>
+
+  <select id="queryBlogCounts" resultType="java.lang.Long">
+    select
+    count(id)
+    from t_blog
+  </select>
+
+  <select id="queryCurrentMaxBlogId" resultType="java.lang.Long">
+    select id
+    from t_blog order by id desc
+    limit 1
+  </select>
+
+  <select id="queryAllRecommendAndPublishedBlogId" resultType="java.lang.Long">
+    select id
+    from t_blog
+    where recommend and published
+    order by id
+  </select>
+
+</mapper>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusamour.inoteblog.mapper.TypeMapper">
+  <resultMap id="BaseResultMap" type="com.campusamour.inoteblog.model.Type">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="blog_nums" property="blogNums" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, name
+  </sql>
+  <select id="queryTypeById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_type
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <select id="queryTypeByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_type
+    where name = #{name,jdbcType=VARCHAR}
+  </select>
+
+  <select id="queryAllTypes" resultMap="BaseResultMap">
+    select
+    *
+    from t_type
+  </select>
+
+  <insert id="insertType" parameterType="com.campusamour.inoteblog.model.Type">
+    insert into t_type (name, blog_nums
+      )
+    values (#{name,jdbcType=VARCHAR}, #{blogNums}
+      )
+  </insert>
+
+  <update id="updateTypeById" parameterType="com.campusamour.inoteblog.model.Type">
+    update t_type
+    set name = #{name,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <delete id="deleteTypeById" parameterType="java.lang.Long">
+    delete from t_type
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <update id="updateIncTypeBlogNums" parameterType="com.campusamour.inoteblog.model.Blog">
+    update t_type set blog_nums = blog_nums + 1 where id = #{id};
+  </update>
+
+  <update id="updateDecTypeBlogNums" parameterType="com.campusamour.inoteblog.model.Blog">
+    update t_type set blog_nums = blog_nums - 1 where id = #{id};
+  </update>
+
+  <!--推荐top size的分类-->
+  <!--<select id="queryTypesByBlogNumsTop" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    id, name, blog_nums
+    from t_type order by blog_nums desc limit #{size};
+  </select>-->
+  <select id="queryTypesByBlogNumsTopOrALL" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    id, name, blog_nums
+    from t_type order by blog_nums desc ${sqlString}
+  </select>
+
+</mapper>

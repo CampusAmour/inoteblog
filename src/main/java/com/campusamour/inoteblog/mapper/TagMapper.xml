@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.campusamour.inoteblog.mapper.TagMapper">
+  <resultMap id="BaseResultMap" type="com.campusamour.inoteblog.model.Tag">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, name, blog_nums
+  </sql>
+  <select id="queryTagById" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_tag
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <select id="queryTagByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from t_tag
+    where name = #{name,jdbcType=VARCHAR}
+  </select>
+
+  <select id="queryAllTags" resultMap="BaseResultMap">
+    select
+    *
+    from t_tag
+  </select>
+
+  <select id="queryTagsByIds" resultMap="BaseResultMap">
+    Select
+    <include refid="Base_Column_List" />
+    from t_tag where id in
+    <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </select>
+
+  <insert id="insertTag" parameterType="com.campusamour.inoteblog.model.Tag">
+    insert into t_tag (name, blog_nums
+      )
+    values (#{name,jdbcType=VARCHAR}, #{blogNums}
+      )
+  </insert>
+
+  <update id="updateTagById" parameterType="com.campusamour.inoteblog.model.Tag">
+    update t_tag
+    set name = #{name,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <delete id="deleteTagById" parameterType="java.lang.Long">
+    delete from t_tag
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <update id="increaseTagBlogNums">
+    update t_tag
+    set blog_nums = blog_nums + 1
+    where id in
+    <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </update>
+
+  <update id="decreaseTagBlogNums">
+    update t_tag
+    set blog_nums = blog_nums - 1
+    where id in
+    <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </update>
+
+  <!--推荐top size的标签-->
+  <select id="queryTagsByBlogNumsTop" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    id, name, blog_nums
+    from t_tag order by blog_nums desc limit #{size};
+  </select>
+
+  <select id="queryTagsByBlogNumsTopOrALL" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    id, name, blog_nums
+    from t_tag order by blog_nums desc ${sqlString}
+  </select>
+
+  <select id="queryAllBlogToTagByTagId" parameterType="java.lang.Long" resultType="java.lang.Long">
+    select
+    blog_id
+    from t_blog_tag where tag_id = #{tagId}
+  </select>
+
+  <insert id="insertBlogToTag">
+    insert into t_blog_tag(blog_id, tag_id)
+    values(#{blogId}, #{tagId})
+  </insert>
+
+  <delete id="deleteBlogToTagByBlogId" parameterType="java.lang.Long">
+    delete from t_blog_tag
+    where blog_id = #{blogId}
+  </delete>
+
+</mapper>
