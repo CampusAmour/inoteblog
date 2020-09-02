@@ -6,8 +6,9 @@ import com.campusamour.inoteblog.service.UserService;
 import com.campusamour.inoteblog.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -20,7 +21,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User checkUser(String username, String password) {
+        /*User user = (User)redisTemplate.opsForValue().get(username);
+        if (user == null) {
+            user = userMapper.searchByUsernameAndPassword(username, MD5Util.code(password));
+            redisTemplate.opsForValue().set(username, user, Duration.ofSeconds(600));   // 10分钟
+        }
+        return user;*/
         User user = userMapper.searchByUsernameAndPassword(username, MD5Util.code(password));
         return user;
     }
+
+
 }

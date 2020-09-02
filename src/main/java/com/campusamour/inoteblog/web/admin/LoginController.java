@@ -6,6 +6,7 @@ import com.campusamour.inoteblog.model.User;
 import com.campusamour.inoteblog.service.BlogService;
 import com.campusamour.inoteblog.service.TagService;
 import com.campusamour.inoteblog.service.UserService;
+import com.google.code.kaptcha.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -30,17 +31,21 @@ public class LoginController {
 
     @GetMapping
     public String loginPage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        /*if (request.getSession().getAttribute("user") == null) {
+        System.out.println(request.getSession().getAttribute("user") );
+        if (request.getSession().getAttribute("user") != null) {
             return "admin/login-index";
         } else {
             return "admin/login";
-        }*/
-        return "admin/login";
+        }
+        /*System.out.println("###################");
+        System.out.println(request.getSession().getAttribute("user") == null);
+        return "admin/login";*/
     }
 
     @GetMapping(value = "/back")
     public String back(HttpSession session, RedirectAttributes attributes) {
         if (session.getAttribute("user") != null) {
+            session.setAttribute("welcome", false);
             return "admin/login-index";
         } else {
             attributes.addFlashAttribute("message", "抱歉，请重新登录");
@@ -49,19 +54,29 @@ public class LoginController {
     }
 
     @PostMapping(value = "/login")
-    public String login(@RequestParam String username, @RequestParam String password, HttpSession session, RedirectAttributes attributes) {
-        if (username == null || password == null) {
-            attributes.addFlashAttribute("message", "用户名或密码不能为空");
+    public String login(@RequestParam String username, @RequestParam String password, @RequestParam String verification, HttpSession session, RedirectAttributes attributes) {
+        if (username == null || password == null || verification == null) {
+            attributes.addFlashAttribute("message", "用户名或密码或验证码不能为空!");
             return "redirect:/admin";
         }
         User user = userService.checkUser(username, password);
         if (user != null) {
-            session.setAttribute("user", user);
-            Blog blog = randomRecommendBlog();
-            session.setAttribute("blog", blog);
-            return "admin/login-index";
+            System.out.println("verification: "+ verification);
+            System.out.println("session.kaptcha: " + session.getAttribute("kaptcha"));
+            System.out.println(verification.toLowerCase());
+            if (session.getAttribute("kaptcha").equals(verification.toLowerCase())) {
+                session.setAttribute("user", user);
+                Blog blog = randomRecommendBlog();
+                session.setAttribute("blog", blog);
+                session.setAttribute("welcome", true);
+                return "admin/login-index";
+            } else {
+                attributes.addFlashAttribute("message", "验证码有误，请重新登录!");
+                return "redirect:/admin";
+            }
+
         } else {
-            attributes.addFlashAttribute("message", "用户名或密码错误");
+            attributes.addFlashAttribute("message", "用户名或密码错误!");
             return "redirect:/admin";
         }
     }
@@ -69,6 +84,7 @@ public class LoginController {
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.removeAttribute("user");
+        // session.setAttribute("user", null);
         return "redirect:/admin";
     }
 

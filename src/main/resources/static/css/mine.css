@@ -188,3 +188,24 @@ body {
         width: 50% !important;
     }
 }
+
+/*-----align-----*/
+.m-align-bottom {
+    position: absolute !important;
+    bottom: 0px !important;
+    right: 0px !important;
+    padding: 0px !important;
+    margin: 0px !important;
+}
+
+.m-font-size-8 {
+    font-size: 8px !important;
+}
+
+.m-button-width {
+    width: 191px !important;
+}
+
+.m-right {
+    right: 0px !important;
+}
