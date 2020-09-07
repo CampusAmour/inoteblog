@@ -6,3 +6,8 @@ iNoteBlog by CampusAmour
 
 JDK 1.8
 SpringBoot 2.3.3
+
+### 2020/9/2
+修复bug成功登录后再进入用户登录界面还会登录的现象；
+登录时输入密码新增可见性功能；
+登录首页显示welcome信息，修复第二次返回首页还会显示该信息的bug。
