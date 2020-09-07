@@ -1,18 +1,20 @@
 package com.campusamour.inoteblog.mapper;
 
 import com.campusamour.inoteblog.model.Blog;
+import com.campusamour.inoteblog.queryentity.BlogQuery;
 import com.campusamour.inoteblog.queryentity.IndexPageBlog;
 import com.campusamour.inoteblog.queryentity.PostPageBlog;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 public interface BlogMapper {
     int insertBlog(Blog blog);
 
-    Blog queryBlogById(Long id);
+    Blog queryBlogById(@Param("sqlString") String sqlString, Long id);
 
-    Blog queryBlogByTitle(Long id, String title);   // 查找除了与id项title相等以外的title博客
+    Blog queryBlogByTitle(@Param("sqlString") String sqlString);   // 查找除了与id项title相等以外的title博客
 
     Long queryRandomPublishedBlogId();
 
@@ -48,5 +50,11 @@ public interface BlogMapper {
     Long queryCurrentMaxBlogId();
 
     List<Long> queryAllRecommendAndPublishedBlogId();
+
+    void updateBlogPublishedById(Long blogId, Date updateTime);
+
+    Boolean queryBlogPublishedByBlogId(Long blogId);
+
+    List<Blog> queryBlogsByBlogQueryEntity(@Param("sqlString") String sqlString);
 
 }

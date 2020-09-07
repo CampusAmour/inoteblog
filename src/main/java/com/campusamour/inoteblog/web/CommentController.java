@@ -49,7 +49,7 @@ public class CommentController {
         }
 
         comment.setBlogId(blogId);
-        comment.setBlog(blogService.searchBlogById(blogId));
+        comment.setBlog(blogService.searchBlogById("", blogId));
         comment.setAvatar(avatar);
         if (comment.getParentComment().getId() != null) {
             comment.setParentCommentId(comment.getParentComment().getId());

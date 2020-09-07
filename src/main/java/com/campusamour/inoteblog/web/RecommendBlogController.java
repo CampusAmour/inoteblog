@@ -36,4 +36,10 @@ public class RecommendBlogController {
         model.addAttribute("recommendBlogs", recommendBlogs);
         return "_fragments :: recommendBlogList";
     }
+
+    @GetMapping("/recommend")
+    public String recommendBlog() {
+        Blog blog = blogService.searchRandomPublishedBlog();
+        return "redirect:/blog/" + blog.getId();
+    }
 }

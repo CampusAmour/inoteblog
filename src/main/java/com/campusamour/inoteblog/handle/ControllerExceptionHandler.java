@@ -14,6 +14,14 @@ import javax.servlet.http.HttpServletRequest;
 public class ControllerExceptionHandler {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @ExceptionHandler(NotFoundBlogException.class)
+    public String notFoundBlogExceptionHandler(Model model, HttpServletRequest request, NotFoundBlogException e) throws Exception {
+        logger.error("Request URL : {}, NotFoundBlogException : {}", request.getRequestURL(), e.getMessage());
+        return "error/blog-not-found.html";
+    }
+
+
     @ExceptionHandler(Exception.class)
     public String exceptionHandler(Model model, HttpServletRequest request, Exception e) throws Exception {
         logger.error("Request URL : {}, Exception : {}", request.getRequestURL(), e.getMessage());

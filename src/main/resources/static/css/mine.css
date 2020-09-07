@@ -202,10 +202,24 @@ body {
     font-size: 8px !important;
 }
 
+.m-font-size-title1 {
+    font-size: 30px !important;
+}
+
+.m-font-size-title2 {
+    font-size: 22px !important;
+}
+
+
 .m-button-width {
     width: 191px !important;
 }
 
 .m-right {
     right: 0px !important;
+}
+
+.m-image-size-small {
+    width: 80px !important;
+    height: 80px !important;
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 
-    <title>出错啦！</title>
+    <title>博客不见啦！</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <link rel="stylesheet" href="../static/css/mine.css">
     <link rel="stylesheet" href="../static/css/typo.css">
@@ -43,8 +43,9 @@
     <div class="m-container-small m-padded-tb-massive">
         <div class="ui error message m-padded-tb-big">
             <div class="ui container">
-                <h1>500</h1>
-                <p>对不起，服务器内部出错啦</p>
+                <h1>BlogNotFound</h1><br/>
+                <p>对不起，您访问的博客可能还未发布出来哒~</p><br/>
+                <p>稍安勿躁，给客观<a th:href="@{/recommend}" id="login">推荐</a>一篇哇~</p>
             </div>
         </div>
     </div>
@@ -95,6 +96,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.2/dist/jquery.min.js"></script>
     <script src="https://eqcn.ajz.miesnfu.com/wp-content/plugins/wp-3d-pony/live2dw/lib/L2Dwidget.min.js"></script>
+    <script>
+        $('#recommend-blog-container').load(/*[[@{/recommend/blog}]]*/"/recommend/blog");
+    </script>
     <script type="text/javascript">
         L2Dwidget.init({
             "model": {
@@ -111,8 +115,15 @@
             }
         });
     </script>
-    <script>
-        $('#recommend-blog-container').load(/*[[@{/recommend/blog}]]*/"/recommend/blog");
+
+    <script language="javascript" type="text/javascript">
+        // 以下方式定时跳转
+        let serverUrl = window.location.host;
+        let url = /*[[@{/recommend}]]*/"/recommend";
+        setTimeout("javascript:location.href='http://'+serverUrl+url", 20000);
+        /*setTimeout($(function(){
+            $("#login").trigger("click");
+        }), 5000);*/
     </script>
 
 </body>

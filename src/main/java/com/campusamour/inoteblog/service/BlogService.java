@@ -8,13 +8,13 @@ import java.util.List;
 import java.util.Map;
 
 public interface BlogService {
-    Blog searchBlogById(Long id);
+    Blog searchBlogById(String sqlString, Long id);
 
     Blog searchBlogMarkdownById(Long id);
 
     int saveBlog(Blog blog);
 
-    Blog searchBlogByTitle(Long id, String title);
+    Blog searchBlogByTitle(String sqlString);
 
     Blog searchRandomPublishedBlog();
 
@@ -45,5 +45,15 @@ public interface BlogService {
     Long searchCurrentMaxBlogId();
 
     List<Long> selectAllRecommendAndPublishedBlogId();
+
+    String saveCurrentBlogInRedis(Blog blog);
+
+    Blog getCurrentBlogInRedis(String uuid);
+
+    void publishBlogById(Long blogId);
+
+    Boolean searchBlogPublishedByBlogId(Long blogId);
+
+    List<Blog> searchBlogsByBlogQueryEntity(String sqlString);
 
 }

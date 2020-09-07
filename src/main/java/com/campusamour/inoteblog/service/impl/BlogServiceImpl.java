@@ -3,16 +3,18 @@ package com.campusamour.inoteblog.service.impl;
 import com.campusamour.inoteblog.handle.NotFoundBlogException;
 import com.campusamour.inoteblog.mapper.BlogMapper;
 import com.campusamour.inoteblog.mapper.TypeMapper;
-import com.campusamour.inoteblog.model.Blog;
+import com.campusamour.inoteblog.model.*;
 import com.campusamour.inoteblog.queryentity.IndexPageBlog;
 import com.campusamour.inoteblog.queryentity.PostPageBlog;
 import com.campusamour.inoteblog.service.BlogService;
 import com.campusamour.inoteblog.util.MarkdownUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -22,6 +24,9 @@ public class BlogServiceImpl implements BlogService {
 
     @Autowired
     private TypeMapper typeMapper;
+
+    @Autowired
+    private RedisTemplate<Object, Object> redisTemplate;
 
     @Transactional
     @Override
@@ -36,14 +41,14 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public Blog searchBlogById(Long id) {
-        return blogMapper.queryBlogById(id);
+    public Blog searchBlogById(String sqlString, Long id) {
+        return blogMapper.queryBlogById(sqlString, id);
     }
 
     @Transactional
     @Override
     public Blog searchBlogMarkdownById(Long id) {
-        Blog blog = blogMapper.queryBlogById(id);
+        Blog blog = blogMapper.queryBlogById("and b.published", id);
         if (blog == null) {
             throw new NotFoundBlogException("该博客不存在哟，如有兴趣请联系作者~");
         }
@@ -62,8 +67,8 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public Blog searchBlogByTitle(Long id, String title) {
-        return blogMapper.queryBlogByTitle(id, title);
+    public Blog searchBlogByTitle(String sqlString) {
+        return blogMapper.queryBlogByTitle(sqlString);
     }
 
     @Transactional
@@ -153,4 +158,75 @@ public class BlogServiceImpl implements BlogService {
     public List<Long> selectAllRecommendAndPublishedBlogId() {
         return blogMapper.queryAllRecommendAndPublishedBlogId();
     }
+
+    @Transactional
+    @Override
+    public String saveCurrentBlogInRedis(Blog blog) {
+        String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        /*if (blog.getId() == null) {
+            redisTemplate.opsForHash().put(uuid, "id", 0);
+        } else {
+            redisTemplate.opsForHash().put(uuid, "id", blog.getId());
+        }*/
+        redisTemplate.opsForHash().put(uuid, "id", blog.getId());
+        redisTemplate.opsForHash().put(uuid, "title", blog.getTitle());
+        redisTemplate.opsForHash().put(uuid, "content", blog.getContent());
+        redisTemplate.opsForHash().put(uuid, "firstImage", blog.getFirstImage());
+        redisTemplate.opsForHash().put(uuid, "flag", blog.getFlag());
+        redisTemplate.opsForHash().put(uuid, "description", blog.getDescription());
+        redisTemplate.opsForHash().put(uuid, "tagIds", blog.getTagIds());
+        redisTemplate.opsForHash().put(uuid, "typeId", blog.getTypeId());
+        redisTemplate.opsForHash().put(uuid, "userId", blog.getUserId());
+        redisTemplate.opsForHash().put(uuid, "appreciation", blog.isAppreciation());
+        redisTemplate.opsForHash().put(uuid, "shareStatement", blog.isShareStatement());
+        redisTemplate.opsForHash().put(uuid, "commentable", blog.isCommentable());
+        redisTemplate.opsForHash().put(uuid, "published", blog.isPublished());
+        redisTemplate.opsForHash().put(uuid, "recommend", blog.isRecommend());
+        redisTemplate.expire(uuid, Duration.ofSeconds(30));
+        return uuid;
+    }
+
+    @Transactional
+    @Override
+    public Blog getCurrentBlogInRedis(String uuid) {
+        Map<Object, Object> resMap = redisTemplate.opsForHash().entries(uuid);
+        if (resMap == null) {
+            throw new NotFoundBlogException();
+        }
+        Blog blog = new Blog();
+        blog.setId((Long) resMap.get("id"));
+        blog.setTitle((String) resMap.get("title"));
+        blog.setContent((String) resMap.get("content"));
+        blog.setFirstImage((String) resMap.get("firstImage"));
+        blog.setFlag((String) resMap.get("flag"));
+        blog.setDescription((String) resMap.get("description"));
+        blog.setTagIds((String) resMap.get("tagIds"));
+        blog.setTypeId((Long) resMap.get("typeId"));
+        blog.setUserId((Long) resMap.get("userId"));
+        blog.setAppreciation((Boolean) resMap.get("appreciation"));
+        blog.setShareStatement((Boolean) resMap.get("shareStatement"));
+        blog.setCommentable((Boolean) resMap.get("commentable"));
+        blog.setPublished((Boolean) resMap.get("published"));
+        blog.setRecommend((Boolean) resMap.get("recommend"));
+
+        // redisTemplate.opsForHash().delete(uuid);
+        return blog;
+    }
+
+    @Transactional
+    @Override
+    public void publishBlogById(Long blogId) {
+        blogMapper.updateBlogPublishedById(blogId, new Date());
+    }
+
+    @Override
+    public Boolean searchBlogPublishedByBlogId(Long blogId) {
+        return blogMapper.queryBlogPublishedByBlogId(blogId);
+    }
+
+    @Override
+    public List<Blog> searchBlogsByBlogQueryEntity(String sqlString) {
+        return blogMapper.queryBlogsByBlogQueryEntity(sqlString);
+    }
+
 }

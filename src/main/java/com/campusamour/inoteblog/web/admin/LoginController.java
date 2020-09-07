@@ -6,7 +6,6 @@ import com.campusamour.inoteblog.model.User;
 import com.campusamour.inoteblog.service.BlogService;
 import com.campusamour.inoteblog.service.TagService;
 import com.campusamour.inoteblog.service.UserService;
-import com.google.code.kaptcha.Producer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +41,7 @@ public class LoginController {
         return "admin/login";*/
     }
 
-    @GetMapping(value = "/back")
+    @GetMapping(value = {"/back", "/login"})
     public String back(HttpSession session, RedirectAttributes attributes) {
         if (session.getAttribute("user") != null) {
             session.setAttribute("welcome", false);

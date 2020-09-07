@@ -38,7 +38,7 @@
         t.name,
         u.nickname, u.avatar
         from t_blog b, t_type t, t_user u
-        where b.type_id = t.id and  u.id = b.user_id and (b.title like CONCAT('%', #{query}, '%') or b.content like CONCAT('%', #{query}, '%'))
+        where published and b.type_id = t.id and  u.id = b.user_id and (b.title like CONCAT('%', #{query}, '%') or b.content like CONCAT('%', #{query}, '%'))
 
   </select>
 
@@ -111,7 +111,7 @@
     </association>
   </resultMap>
 
-  <select id="queryBlogById" parameterType="java.lang.Long" resultMap="allBlogInfoResultMap">
+  <select id="queryBlogById" resultMap="allBlogInfoResultMap">
     select
     b.id, b.title, b.content, b.first_image, b.flag, b.description,
     b.tag_ids, b.views, b.comment_count, b.type_id, b.user_id,
@@ -120,7 +120,7 @@
     u.id, u.nickname, u.username, u.avatar, u.email,
     t.id, t.name, t.blog_nums
     from t_blog b, t_user u, t_type t
-    where b.id = #{id} and b.type_id = t.id and b.user_id = u.id
+    where b.id = #{id} and b.type_id = t.id and b.user_id = u.id ${sqlString}
   </select>
 
   <select id="queryBlogsbyBlogIds" resultMap="allBlogInfoResultMap">
@@ -135,14 +135,14 @@
     <foreach item="id" index="index" collection="list" open="(" separator="," close=")">
       #{id}
     </foreach>
-    and b.type_id = t.id and  u.id = b.user_id
+    and b.published and  b.type_id = t.id and  u.id = b.user_id
   </select>
 
   <select id="queryBlogByTitle" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
     from t_blog
-    where title = #{title,jdbcType=VARCHAR} and id != #{id}
+    where ${sqlString}
   </select>
 
   <insert id="insertBlog" parameterType="com.campusamour.inoteblog.model.Blog">
@@ -187,7 +187,7 @@
     id, title, content, first_image, flag, views, comment_count,
     appreciation, share_statement, commentable, published,
     recommend, create_time, update_time, type_id, user_id, tag_ids, description
-    from t_blog where recommend = true order by views desc limit #{size}
+    from t_blog where recommend = true and published order by views desc limit #{size}
   </select>
 
   <!--随机推荐一篇已发表博客的id值-->
@@ -207,6 +207,7 @@
     date_format(update_time, "%Y")
     as year from
     t_blog
+    where published
     group by
     year
     order by year desc
@@ -216,13 +217,14 @@
     select
     id, title, flag, update_time
     from t_blog
-    where date_format(update_time, "%Y") = #{year}
+    where published and date_format(update_time, "%Y") = #{year}
   </select>
 
   <select id="queryBlogCounts" resultType="java.lang.Long">
     select
     count(id)
     from t_blog
+    where published
   </select>
 
   <select id="queryCurrentMaxBlogId" resultType="java.lang.Long">
@@ -236,6 +238,27 @@
     from t_blog
     where recommend and published
     order by id
+  </select>
+
+  <update id="updateBlogPublishedById">
+    update t_blog set
+    published = not published,
+    update_time = #{updateTime}
+    where id = #{blogId}
+  </update>
+
+  <select id="queryBlogPublishedByBlogId" parameterType="java.lang.Long" resultType="java.lang.Boolean">
+    select published
+    from t_blog
+    where id = #{blogId}
+  </select>
+
+  <select id="queryBlogsByBlogQueryEntity" resultMap="queryPostPageBlogs">
+        select
+        b.id, b.title ,b.recommend, b.published, b.update_time,
+        t.id, t.name, t.blog_nums
+        from t_blog b, t_type t
+        where b.type_id = t.id ${sqlString}
   </select>
 
 </mapper>

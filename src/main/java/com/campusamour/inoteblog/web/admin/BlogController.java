@@ -4,6 +4,7 @@ import com.campusamour.inoteblog.model.Blog;
 import com.campusamour.inoteblog.model.Tag;
 import com.campusamour.inoteblog.model.Type;
 import com.campusamour.inoteblog.model.User;
+import com.campusamour.inoteblog.queryentity.BlogQuery;
 import com.campusamour.inoteblog.queryentity.PostPageBlog;
 import com.campusamour.inoteblog.service.BlogService;
 import com.campusamour.inoteblog.service.TagService;
@@ -50,13 +51,29 @@ public class BlogController {
     }
 
     // 未实现
-    @GetMapping("/blogs/search")
-    public String searchBlogs(@RequestParam(defaultValue = "1", value = "pageNum") Integer pageNum, Model model) {
+    @PostMapping("/blogs/search")
+    public String searchBlogs(@RequestParam(defaultValue = "1", value = "pageNum") Integer pageNum, BlogQuery blog, Model model) {
         // 使用PageHelper实现分页
-        String orderBy = "id desc";
+        String orderBy = "update_time desc";
+        String sql = "";
+        if (!"".equals(blog.getQueryTitle())) {
+            sql = " and b.title like '%" + blog.getQueryTitle() + "%'";
+        }
+        if (blog.getTypeId() != null) {
+            sql = sql + " and b.type_id = " + blog.getTypeId();
+        }
+        if (blog.getRecommend()) {
+            sql = sql + " and b.recommend";
+        }
         PageHelper.startPage(pageNum, 10, orderBy);
-        List<Blog> blogList = blogService.selectAllBlogs();
-        PageInfo<Blog> pageInfo = new PageInfo<>(blogList);
+        List<Blog> blogList = blogService.searchBlogsByBlogQueryEntity(sql);
+        PageInfo<Blog> pageInfo = null;
+        if (blogList.size() > 0) {
+            pageInfo = new PageInfo<>(blogList);
+
+        } else {
+            pageInfo = new PageInfo<>();
+        }
         model.addAttribute("pageInfo", pageInfo);
         return "admin/blogs-admin :: blogList";
     }
@@ -69,6 +86,20 @@ public class BlogController {
         blog.setCreateTime(time);
         model.addAttribute("blog", blog);
 
+        model.addAttribute("types", typeService.selectAllTypes());
+        model.addAttribute("tags", tagService.selectAllTags());
+        return "admin/blogs-input";
+    }
+
+    @GetMapping("/blogs/write/{uuid}")
+    public String writeTitleRepeatBlogs(@PathVariable String uuid, Model model) {
+        // 从redis中取
+        Blog blog = blogService.getCurrentBlogInRedis(uuid);
+        Date time = new Date();
+        blog.setUpdateTime(time);
+        blog.setCreateTime(time);
+        model.addAttribute("blog", blog);
+        model.addAttribute("message", "博客标题已被占用，赶紧换一个呀~");
         model.addAttribute("types", typeService.selectAllTypes());
         model.addAttribute("tags", tagService.selectAllTags());
         return "admin/blogs-input";
@@ -98,11 +129,11 @@ public class BlogController {
             if (tagIds != null && !"".equals(tagIds))
                 tagService.decreaseTagBlogNums(tagIds);
         }
-        Blog temp_blog = blogService.searchBlogByTitle(blog.getId(), blog.getTitle());
-        if (temp_blog != null) {
-            attributes.addFlashAttribute("message", "博客标题已存在");
-            return "redirect:/admin/blogs/write";
+        String sqlString = "title = '" + blog.getTitle() +"'";
+        if (blog.getId() != null) {
+            sqlString = sqlString + "and id !=" + blog.getId();
         }
+
         Long typeId = blog.getTypeId();
         blog.setType(typeService.searchTypeById(typeId));
 
@@ -112,11 +143,24 @@ public class BlogController {
         } else {
             blog.setTags(tagService.selectTagsByIds(tagIds));
         }
+
+        Blog temp_blog = blogService.searchBlogByTitle(sqlString);
+        if (temp_blog != null) {
+            // attributes.addFlashAttribute("message", "博客标题已存在");
+
+            // 还原函数
+            String uuid = blogService.saveCurrentBlogInRedis(blog);
+
+            return "redirect:/admin/blogs/write/" + uuid;
+        }
+
         if (blog.getId() == null) {
             int b = blogService.saveBlog(blog);
-            int t1 = typeService.increaseTypeBlogNums(typeId);
-            int t2 = tagService.increaseTagBlogNums(tagIds);
-
+            int t1 = 1, t2 = 1;
+            if (blog.isPublished()) {
+                t1 = typeService.increaseTypeBlogNums(typeId);
+                t2 = tagService.increaseTagBlogNums(tagIds);
+            }
             // t_blog_tag表
             if (!"".equals(tagIds) && tagIds != null) {
                 Long blogId = blogService.searchCurrentMaxBlogId();
@@ -130,13 +174,17 @@ public class BlogController {
             }
         } else {
             int b = blogService.updateBlog(blog);
-            int t1 = typeService.increaseTypeBlogNums(typeId);
-            int t2 = 1;
+            int t1 = 1, t2 = 1;
+            if (blog.isPublished()) {
+                t1 = typeService.increaseTypeBlogNums(typeId);
+            }
 
             // t_blog_tag表
             tagService.removeBlogToTagByBlogId(blog.getId());
             if (!"".equals(tagIds) && tagIds != null) { // tagIds不为空时，才访问数据库增加tag对应的blog_num
-                t2 = tagService.increaseTagBlogNums(tagIds);
+                if (blog.isPublished()) {
+                    t2 = tagService.increaseTagBlogNums(tagIds);
+                }
                 // t_blog_tag表
                 tagService.addBlogToTag(blog.getId(), tagIds);
             }
@@ -159,7 +207,7 @@ public class BlogController {
         model.addAttribute("originalTypeId", blogService.searchBlogTypeId(id));
         model.addAttribute("originalTagIds", blogService.searchBlogTagIds(id));
 
-        Blog blog = blogService.searchBlogById(id);
+        Blog blog = blogService.searchBlogById("", id);
         blog.listToString();
         model.addAttribute("blog", blog);
         return "admin/blogs-input";
@@ -169,12 +217,17 @@ public class BlogController {
     @GetMapping("/blogs/{id}/delete")
     public String deleteBlog(@PathVariable Long id, RedirectAttributes attributes, Model model) {
         Long typeId = blogService.searchBlogTypeId(id); // blogId
-        int t1 = typeService.decreaseTypeBlogNums(typeId);
-
+        Boolean publishState = blogService.searchBlogPublishedByBlogId(id); // blogId
+        int t1 = 1, t2 = 1;
+        if (publishState) {
+            t1 = typeService.decreaseTypeBlogNums(typeId);
+        }
         String tagIds = blogService.searchBlogTagIds(id);   // blogId
-        int t2 = 1;
         if (tagIds != null && !"".equals(tagIds))
-            tagService.decreaseTagBlogNums(tagIds);
+            // 删除t_blog_tag表
+            tagService.removeBlogToTagByBlogId(id);
+            if (publishState)
+                t2 = tagService.decreaseTagBlogNums(tagIds);
         if (t1 == 0 || t2 == 0) {
             attributes.addFlashAttribute("message", "删除操作失败");
             return "redirect:/admin/blogs";
@@ -184,31 +237,35 @@ public class BlogController {
         return "redirect:/admin/blogs";
     }
 
-    // test
-/*    @GetMapping("/test/blog/{size}")
-    public @ResponseBody List<Blog> test1(@PathVariable Integer size) {
-        List<Blog> blogList = blogService.selectBlogsByRecommendAndViewsTop(size);
-        for (Blog blog : blogList) {
-            System.out.println(blog);
-        }
-        return blogList;
+    @Transactional
+    @GetMapping("/blogs/{id}/publish")
+    public String publishBlog(@PathVariable Long id, RedirectAttributes attributes, Model model) {
+        blogService.publishBlogById(id);
+
+        // 增加t_type和t_tag中的blog_nums
+        Long typeId = blogService.searchBlogTypeId(id);
+        typeService.increaseTypeBlogNums(typeId);
+
+        String tagIds = blogService.searchBlogTagIds(id);
+        tagService.increaseTagBlogNums(tagIds);
+
+        attributes.addFlashAttribute("message", "博客状态修改成功");
+        return "redirect:/admin/blogs";
     }
 
-    @GetMapping("/test/tag/{size}")
-    public @ResponseBody List<Tag> test2(@PathVariable Integer size) {
-        List<Tag> tagList = tagService.selectTagsByBlogNumsTop(size);
-        for (Tag tag : tagList) {
-            System.out.println(tag);
-        }
-        return tagList;
-    }
+    @Transactional
+    @GetMapping("/blogs/{id}/withdraw")
+    public String withdrawBlog(@PathVariable Long id, RedirectAttributes attributes, Model model) {
+        blogService.publishBlogById(id);
 
-    @GetMapping("/test/type/{size}")
-    public @ResponseBody List<Type> test3(@PathVariable Integer size) {
-        List<Type> typeList = typeService.selectTypesByBlogNumsTop(size);
-        for (Type type : typeList) {
-            System.out.println(type);
-        }
-        return typeList;
-    }*/
+        // 减少t_type和t_tag中的blog_nums
+        Long typeId = blogService.searchBlogTypeId(id);
+        typeService.decreaseTypeBlogNums(typeId);
+
+        String tagIds = blogService.searchBlogTagIds(id);
+        tagService.decreaseTagBlogNums(tagIds);
+
+        attributes.addFlashAttribute("message", "博客状态修改成功");
+        return "redirect:/admin/blogs";
+    }
 }

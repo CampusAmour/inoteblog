@@ -38,14 +38,19 @@ public class TagFrontController {
             String orderBy = "update_time desc";
             PageHelper.startPage(pageNum, 6, orderBy);
             List<Blog> blogList = blogService.selectBlogsbyBlogIds(blogIds);
-            for (Blog blog : blogList) {
-                String tagIds = blog.getTagIds();
-                if (tagIds != null && !"".equals(tagIds)) {
-                    blog.setTags(tagService.selectTagsByIds(tagIds));
+            if (blogList.size() > 0) {
+                for (Blog blog : blogList) {
+                    String tagIds = blog.getTagIds();
+                    if (tagIds != null && !"".equals(tagIds)) {
+                        blog.setTags(tagService.selectTagsByIds(tagIds));
+                    }
                 }
+                PageInfo<Blog> pageInfo = new PageInfo<>(blogList);
+                model.addAttribute("pageInfo", pageInfo);
+            } else {
+                PageInfo<IndexPageBlog> pageInfo = new PageInfo<>();
+                model.addAttribute("pageInfo", pageInfo);
             }
-            PageInfo<Blog> pageInfo = new PageInfo<>(blogList);
-            model.addAttribute("pageInfo", pageInfo);
         } else {
             PageInfo<IndexPageBlog> pageInfo = new PageInfo<>();
             model.addAttribute("pageInfo", pageInfo);
