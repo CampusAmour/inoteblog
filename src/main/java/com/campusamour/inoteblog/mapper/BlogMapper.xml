@@ -217,7 +217,7 @@
     select
     id, title, flag, update_time
     from t_blog
-    where published and date_format(update_time, "%Y") = #{year}
+    where published and date_format(update_time, "%Y") = #{year} order by update_time asc
   </select>
 
   <select id="queryBlogCounts" resultType="java.lang.Long">

@@ -50,7 +50,6 @@ public class BlogController {
         return "admin/blogs-admin";
     }
 
-    // 未实现
     @PostMapping("/blogs/search")
     public String searchBlogs(@RequestParam(defaultValue = "1", value = "pageNum") Integer pageNum, BlogQuery blog, Model model) {
         // 使用PageHelper实现分页
@@ -247,7 +246,8 @@ public class BlogController {
         typeService.increaseTypeBlogNums(typeId);
 
         String tagIds = blogService.searchBlogTagIds(id);
-        tagService.increaseTagBlogNums(tagIds);
+        if (tagIds != null && !"".equals(tagIds))
+            tagService.increaseTagBlogNums(tagIds);
 
         attributes.addFlashAttribute("message", "博客状态修改成功");
         return "redirect:/admin/blogs";
@@ -263,7 +263,9 @@ public class BlogController {
         typeService.decreaseTypeBlogNums(typeId);
 
         String tagIds = blogService.searchBlogTagIds(id);
-        tagService.decreaseTagBlogNums(tagIds);
+        if (tagIds == null && !"".equals(tagIds)) {
+            tagService.decreaseTagBlogNums(tagIds);
+        }
 
         attributes.addFlashAttribute("message", "博客状态修改成功");
         return "redirect:/admin/blogs";

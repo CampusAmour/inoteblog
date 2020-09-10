@@ -30,15 +30,12 @@ public class LoginController {
 
     @GetMapping
     public String loginPage(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        System.out.println(request.getSession().getAttribute("user") );
+        // System.out.println(request.getSession().getAttribute("user") );
         if (request.getSession().getAttribute("user") != null) {
             return "admin/login-index";
         } else {
             return "admin/login";
         }
-        /*System.out.println("###################");
-        System.out.println(request.getSession().getAttribute("user") == null);
-        return "admin/login";*/
     }
 
     @GetMapping(value = {"/back", "/login"})
@@ -60,9 +57,9 @@ public class LoginController {
         }
         User user = userService.checkUser(username, password);
         if (user != null) {
-            System.out.println("verification: "+ verification);
-            System.out.println("session.kaptcha: " + session.getAttribute("kaptcha"));
-            System.out.println(verification.toLowerCase());
+//            System.out.println("verification: "+ verification);
+//            System.out.println("session.kaptcha: " + session.getAttribute("kaptcha"));
+//            System.out.println(verification.toLowerCase());
             if (session.getAttribute("kaptcha").equals(verification.toLowerCase())) {
                 session.setAttribute("user", user);
                 Blog blog = randomRecommendBlog();

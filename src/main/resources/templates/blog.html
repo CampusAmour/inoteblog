@@ -302,6 +302,12 @@
     </script>
     <!--/*/</th:block>/*/-->
 
+    <script>
+        $('.menu.toggle').click(function(){
+            $('.m-item').toggleClass('m-mobile-hidden');
+        });
+    </script>
+
     <script th:inline="javascript">
         $('.menu.toggle').click(function(){
             $('.m-item').toggleClass('m-mobile-hidden');

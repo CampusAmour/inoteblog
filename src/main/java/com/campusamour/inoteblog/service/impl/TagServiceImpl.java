@@ -50,9 +50,9 @@ public class TagServiceImpl implements TagService {
                 list.add(new Long(id));
             }
         }
-        for (Long aLong : list) {
-            System.out.println(aLong);
-        }
+//        for (Long aLong : list) {
+//            System.out.println(aLong);
+//        }
         return list;
     }
 

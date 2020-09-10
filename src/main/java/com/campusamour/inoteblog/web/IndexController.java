@@ -41,7 +41,7 @@ public class IndexController {
             }
         }
         PageInfo<IndexPageBlog> pageInfo = new PageInfo<>(blogList);
-        System.out.println("total: " + pageInfo.getTotal());
+        // System.out.println("total: " + pageInfo.getTotal());
         model.addAttribute("pageInfo", pageInfo);
 
         // 加载热门分类、标签、博客
@@ -71,7 +71,7 @@ public class IndexController {
         PageHelper.startPage(pageNum, 6, orderBy);
         List<IndexPageBlog> blogList = blogService.selectQueryBlogs(query);
         PageInfo<IndexPageBlog> pageInfo = new PageInfo<>(blogList);
-        System.out.println("total: " + pageInfo.getTotal());
+        // System.out.println("total: " + pageInfo.getTotal());
         model.addAttribute("pageInfo", pageInfo);
         model.addAttribute("query", query);
         return "search";

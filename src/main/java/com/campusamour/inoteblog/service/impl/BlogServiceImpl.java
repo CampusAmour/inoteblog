@@ -78,7 +78,7 @@ public class BlogServiceImpl implements BlogService {
         List<Blog> blogList = new ArrayList<>();
         for (Blog blog : tempBlogList) {
             blog.setType(typeMapper.queryTypeById(blog.getTypeId()));
-            System.out.println(blog.getTypeId());
+            // System.out.println(blog.getTypeId());
             blogList.add(blog);
         }
         return blogList;
