@@ -7,6 +7,7 @@ import com.campusamour.inoteblog.model.*;
 import com.campusamour.inoteblog.queryentity.IndexPageBlog;
 import com.campusamour.inoteblog.queryentity.PostPageBlog;
 import com.campusamour.inoteblog.service.BlogService;
+import com.campusamour.inoteblog.util.DateUtil;
 import com.campusamour.inoteblog.util.MarkdownUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class BlogServiceImpl implements BlogService {
     private TypeMapper typeMapper;
 
     @Autowired
-    private RedisTemplate<Object, Object> redisTemplate;
+    private RedisTemplate redisTemplate;
 
     @Transactional
     @Override
@@ -124,6 +125,27 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public List<Blog> selectBlogsByRecommendAndViewsTopOrRandomRecommendInRedis(Integer size, String name) {
+        Long setSize = redisTemplate.opsForZSet().size(name);
+        if (setSize != null && setSize >= size) {
+            List<Blog> recommendBlogs = new ArrayList<>(redisTemplate.opsForZSet().range(name, 0, size));
+            return recommendBlogs;
+        } else {
+            return null;
+        }
+    }
+
+    @Transactional
+    @Override
+    public boolean saveBlogsByRecommendAndViewsTopOrRandomRecommendInRedis(List<Blog> blogs, String name) {
+        for (Blog blog : blogs) {
+            redisTemplate.opsForZSet().add(name, blog, -1*blog.getViews());
+        }
+        redisTemplate.expire(name, Duration.ofSeconds(DateUtil.getSecondsNextEarlyMorning()));
+        return true;
+    }
+
+    @Override
     public List<Blog> selectBlogsByRecommendAndViewsTop(Integer size) {
         return blogMapper.queryBlogsByRecommendAndViewsTop(size);
     }
@@ -131,11 +153,10 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public List<IndexPageBlog> selectIndexPageBlogs(String sqlString) {
         return blogMapper.queryIndexPageBlogs(sqlString);
-
     }
 
     @Override
-    public List<Blog> selectBlogsbyBlogIds(List<Long> blogIds) {
+    public List<Blog> selectBlogsByBlogIds(List<Long> blogIds) {
         return blogMapper.queryBlogsbyBlogIds(blogIds);
     }
 
@@ -146,7 +167,7 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public List<PostPageBlog> selectPostPageBlogs() {
-        return  blogMapper.queryPostPageBlogs();
+        return blogMapper.queryPostPageBlogs();
     }
 
     @Override
@@ -159,15 +180,12 @@ public class BlogServiceImpl implements BlogService {
         return blogMapper.queryAllRecommendAndPublishedBlogId();
     }
 
+    /*
     @Transactional
     @Override
     public String saveCurrentBlogInRedis(Blog blog) {
         String uuid = UUID.randomUUID().toString().replaceAll("-","");
-        /*if (blog.getId() == null) {
-            redisTemplate.opsForHash().put(uuid, "id", 0);
-        } else {
-            redisTemplate.opsForHash().put(uuid, "id", blog.getId());
-        }*/
+
         redisTemplate.opsForHash().put(uuid, "id", blog.getId());
         redisTemplate.opsForHash().put(uuid, "title", blog.getTitle());
         redisTemplate.opsForHash().put(uuid, "content", blog.getContent());
@@ -212,6 +230,7 @@ public class BlogServiceImpl implements BlogService {
         // redisTemplate.opsForHash().delete(uuid);
         return blog;
     }
+    */
 
     @Transactional
     @Override

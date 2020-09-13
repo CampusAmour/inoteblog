@@ -54,15 +54,18 @@
     <div class="m-container m-padded-tb-big">
         <div class="ui container">
 
-            <div class="ui error message close" th:if="${message}">
-                <i class="close icon"></i>
-                <div class="" th:text="'|提示：'+${message}">提示：标题重复</div>
+<!--            <div class="ui error message close" th:if="${message}">-->
+<!--                <i class="close icon"></i>-->
+<!--                <div class="" id="judge_title_result" th:text="'|提示：'+${message}">提示：标题重复</div>-->
+<!--            </div>-->
+            <div class="ui message" id="showopt" style="display: none">
+                <div class="" id="judge_title_result"></div>
             </div>
 
             <form id="blog-form" class="ui form" th:object="${blog}" action="#" th:action="@{/admin/blogs}" method="post">
                 <input type="hidden" name="published">
                 <input type="hidden" name="flag">
-                <input type="hidden" name="id" th:value="*{id}">
+                <input type="hidden" name="id" id="id" th:value="*{id}">
                 <input type="hidden" name="views" th:value="*{views}">
                 <input type="hidden" name="commentCount" th:value="*{commentCount}">
                 <input type="hidden" name="userId" th:value="*{userId}">
@@ -83,7 +86,10 @@
                                 <div class="green item" data-value="转载">转载</div>
                             </div>
                         </div>
-                        <input class="required" type="text" name="title" th:value="*{title}" placeholder="标题">
+                        <!--operation-->
+                        <input class="required" type="text" name="title" id="title" th:value="*{title}" placeholder="标题">
+                        <input type="hidden" id="title-pass"/>
+
                     </div>
                 </div>
                 <div class="required field">
@@ -273,6 +279,33 @@
             */
         });
 
+        // blur事件触发
+        $(function() {
+            $('#title').blur(function() {
+                var title = $(this).val();
+                var blog_id = $('#id').val();
+                // send ajax request
+                if (title != "") {
+                    $.get("/admin/blogs/judge", {title: title, id: blog_id}, function (data) {
+                        var span = $('#judge_title_result');
+                        $("#showopt").css("display", "block");
+                        if (data.titleExist) {
+                            $("#showopt").removeClass("success");
+                            $("#showopt").addClass("error");
+                            $("#title-pass").val("0");
+                        } else {
+                            $("#showopt").removeClass("error");
+                            $("#showopt").addClass("success");
+                            $("#title-pass").val("1");
+                        }
+                        span.html(data.message);
+                    });
+                } else {
+                    $("#title-pass").val("-1");
+                    $("#showopt").css("display", "none");
+                }
+            });
+        });
 
         $('.menu.toggle').click(function(){
             $('.m-item').toggleClass('m-mobile-hidden');
@@ -286,7 +319,7 @@
                     identifier: 'title',
                     rules: [{
                         type: 'empty',
-                        prompt: '博客标题不能为空'
+                        prompt: '博客标题不能重复或为空'
                     }]
                 },
                 content: {
@@ -328,19 +361,32 @@
             });
 
         $('#save-btn').click(function () {
-            $('[name="published"]').val(false);
-            $('#blog-form').submit();
+            tag = $("#title-pass").val();
+            if (tag == "0") {
+                $('body, html').animate({
+                    scrollTop: 0
+                }, 500);
+            } else {
+                $('[name="published"]').val(false);
+                $('#blog-form').submit();
+            }
         });
 
 
         $('#publish-btn').click(function () {
-            $('[name="published"]').val(true);
-            $('#blog-form').submit();
+            tag = $("#title-pass").val();
+            if (tag == "0") {
+                $('body, html').animate({
+                    scrollTop: 0
+                }, 500);
+            } else {
+                $('[name="published"]').val(true);
+                $('#blog-form').submit();
+            }
         });
         $('.ui.tag.dropdown').dropdown({
             allowAdditions : true
         });
-
     </script>
 
     <script>

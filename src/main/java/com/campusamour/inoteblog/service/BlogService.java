@@ -20,11 +20,15 @@ public interface BlogService {
 
     List<Blog> selectAllBlogs();
 
+    List<Blog> selectBlogsByRecommendAndViewsTopOrRandomRecommendInRedis(Integer size, String name);
+
+    boolean saveBlogsByRecommendAndViewsTopOrRandomRecommendInRedis(List<Blog> blogs, String name);
+
     List<Blog> selectBlogsByRecommendAndViewsTop(Integer size);
 
     List<IndexPageBlog> selectIndexPageBlogs(String sqlString);
 
-    List<Blog> selectBlogsbyBlogIds(List<Long> blogIds);
+    List<Blog> selectBlogsByBlogIds(List<Long> blogIds);
 
     List<IndexPageBlog> selectQueryBlogs(String query); // 按title或内容搜索
 
@@ -46,9 +50,9 @@ public interface BlogService {
 
     List<Long> selectAllRecommendAndPublishedBlogId();
 
-    String saveCurrentBlogInRedis(Blog blog);
+    // String saveCurrentBlogInRedis(Blog blog);
 
-    Blog getCurrentBlogInRedis(String uuid);
+    // Blog getCurrentBlogInRedis(String uuid);
 
     void publishBlogById(Long blogId);
 

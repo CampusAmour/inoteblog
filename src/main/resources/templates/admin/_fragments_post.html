@@ -57,8 +57,8 @@
                 <div class="four wide column">
                     <h4 class="ui inverted header m-text-thin m-text-spaced">每日推文</h4>
                     <div id="recommend-blog-container">
-                        <div class="ui inverted link list" th:fragment="recommendBlogList">
-                            <a href="#" th:href="@{/blog/{id}(id=${blog.id})}" target="_blank" class="item m-text-thin" th:each="blog : ${recommendBlogs}" th:text="${blog.title}">每日推送博客</a>
+                        <div class="ui inverted link list" th:fragment="randomRecommendBlogList">
+                            <a href="#" th:href="@{/blog/{id}(id=${blog.id})}" target="_blank" class="item m-text-thin" th:each="blog : ${randomRecommendBlogs}" th:text="${blog.title}">每日推送博客</a>
                         </div>
                     </div>
                 </div>

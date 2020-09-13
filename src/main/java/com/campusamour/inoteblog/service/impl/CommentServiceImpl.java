@@ -21,7 +21,8 @@ public class CommentServiceImpl implements CommentService {
     private CommentMapper commentMapper;
 
     @Autowired
-    private RedisTemplate<Object, Object> redisTemplate;
+    private RedisTemplate redisTemplate;
+    // private RedisTemplate<Object, Object> redisTemplate;
 
     private ArrayList<Long> subCommentIdPool = new ArrayList<>(); // 公共的存放子评论的池子
 

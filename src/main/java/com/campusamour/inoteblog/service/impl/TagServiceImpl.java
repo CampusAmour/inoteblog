@@ -2,13 +2,15 @@ package com.campusamour.inoteblog.service.impl;
 
 import com.campusamour.inoteblog.mapper.TagMapper;
 import com.campusamour.inoteblog.model.Tag;
-import com.campusamour.inoteblog.queryentity.BlogToTag;
+import com.campusamour.inoteblog.model.Type;
 import com.campusamour.inoteblog.service.TagService;
+import com.campusamour.inoteblog.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +19,9 @@ public class TagServiceImpl implements TagService {
 
     @Autowired
     private TagMapper tagMapper;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Transactional
     @Override
@@ -54,6 +59,29 @@ public class TagServiceImpl implements TagService {
 //            System.out.println(aLong);
 //        }
         return list;
+    }
+
+    @Override
+    public List<Tag> selectTagsByBlogNumsTopInRedis(Integer size) {
+        String name = "tags";
+        Long setSize = redisTemplate.opsForZSet().size(name);
+        if (setSize != null && setSize >= size) {
+            List<Tag> tags = new ArrayList<>(redisTemplate.opsForZSet().range(name, 0, size));
+            return tags;
+        } else {
+            return null;
+        }
+    }
+
+    @Transactional
+    @Override
+    public boolean saveTagsByBlogNumsTopInRedis(List<Tag> tags) {
+        String name = "tags";
+        for (Tag tag : tags) {
+            redisTemplate.opsForZSet().add(name, tag, -1*tag.getBlogNums());
+        }
+        redisTemplate.expire(name, Duration.ofSeconds(DateUtil.getSecondsNextEarlyMorning()));
+        return true;
     }
 
     @Override

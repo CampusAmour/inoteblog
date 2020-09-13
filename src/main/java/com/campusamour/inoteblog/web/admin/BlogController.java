@@ -18,10 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Controller
 @RequestMapping("/admin")
@@ -90,6 +89,7 @@ public class BlogController {
         return "admin/blogs-input";
     }
 
+    /*
     @GetMapping("/blogs/write/{uuid}")
     public String writeTitleRepeatBlogs(@PathVariable String uuid, Model model) {
         // 从redis中取
@@ -102,6 +102,31 @@ public class BlogController {
         model.addAttribute("types", typeService.selectAllTypes());
         model.addAttribute("tags", tagService.selectAllTags());
         return "admin/blogs-input";
+    }
+     */
+
+    @GetMapping("/blogs/judge")
+    @ResponseBody
+    public Map<String, Object> judgeTitle(HttpServletRequest request) {
+        String title = request.getParameter("title");
+        String blog_id = request.getParameter("id");
+
+        String sqlString = "title = '" + title +"'";
+        if (blog_id != null && !"".equals(blog_id)) {
+            sqlString = sqlString + "and id !=" + blog_id;
+        }
+        System.out.println(sqlString);
+
+        Map<String, Object> mapRes = new HashMap<>();
+        Blog temp_blog = blogService.searchBlogByTitle(sqlString);
+        if (temp_blog != null) {
+            mapRes.put("titleExist", true);
+            mapRes.put("message", "博客标题已被占用，赶紧换一个呀~");
+        } else {
+            mapRes.put("titleExist", false);
+            mapRes.put("message", "标题可以使用~");
+        }
+        return mapRes;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -128,10 +153,6 @@ public class BlogController {
             if (tagIds != null && !"".equals(tagIds))
                 tagService.decreaseTagBlogNums(tagIds);
         }
-        String sqlString = "title = '" + blog.getTitle() +"'";
-        if (blog.getId() != null) {
-            sqlString = sqlString + "and id !=" + blog.getId();
-        }
 
         Long typeId = blog.getTypeId();
         blog.setType(typeService.searchTypeById(typeId));
@@ -141,16 +162,6 @@ public class BlogController {
             blog.setTags(new ArrayList<Tag>());
         } else {
             blog.setTags(tagService.selectTagsByIds(tagIds));
-        }
-
-        Blog temp_blog = blogService.searchBlogByTitle(sqlString);
-        if (temp_blog != null) {
-            // attributes.addFlashAttribute("message", "博客标题已存在");
-
-            // 还原函数
-            String uuid = blogService.saveCurrentBlogInRedis(blog);
-
-            return "redirect:/admin/blogs/write/" + uuid;
         }
 
         if (blog.getId() == null) {

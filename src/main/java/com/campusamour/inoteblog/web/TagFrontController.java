@@ -37,7 +37,7 @@ public class TagFrontController {
         if (blogIds.size() > 0) {
             String orderBy = "update_time desc";
             PageHelper.startPage(pageNum, 6, orderBy);
-            List<Blog> blogList = blogService.selectBlogsbyBlogIds(blogIds);
+            List<Blog> blogList = blogService.selectBlogsByBlogIds(blogIds);
             if (blogList.size() > 0) {
                 for (Blog blog : blogList) {
                     String tagIds = blog.getTagIds();

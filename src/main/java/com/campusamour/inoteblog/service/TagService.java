@@ -15,6 +15,10 @@ public interface TagService {
 
     List<Tag> selectTagsByIds(String ids);
 
+    List<Tag> selectTagsByBlogNumsTopInRedis(Integer size);
+
+    boolean saveTagsByBlogNumsTopInRedis(List<Tag> tags);
+
     List<Tag> selectTagsByBlogNumsTopOrAll(Integer size, String sqlString);
 
     int updateTag(Tag tag);

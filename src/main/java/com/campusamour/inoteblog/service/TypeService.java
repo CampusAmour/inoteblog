@@ -12,6 +12,10 @@ public interface TypeService {
 
     List<Type> selectAllTypes();
 
+    List<Type> selectTypesByBlogNumsTopInRedis(Integer size);
+
+    boolean saveTypesByBlogNumsTopInRedis(List<Type> types);
+
     List<Type> selectTypesByBlogNumsTopOrAll(Integer size, String sqlString);
 
     int updateType(Type type);
